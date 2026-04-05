@@ -3,5 +3,7 @@ pydantic-settings==2.6.1
 sqlalchemy==2.0.36
 asyncpg==0.30.0
 anthropic==0.40.0
+yookassa==3.4.0
+aiohttp==3.10.0
 # Optional: install for voice message transcription via Whisper
 # openai>=1.0.0

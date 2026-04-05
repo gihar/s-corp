@@ -10,5 +10,12 @@ class Settings(BaseSettings):
     openai_api_key: str = ""  # Used for Whisper STT (optional)
     debug: bool = False
 
+    # YooKassa payment settings
+    yookassa_shop_id: str = ""
+    yookassa_secret_key: str = ""
+
+    # Webhook server (receives YooKassa payment notifications)
+    webhook_port: int = 8080
+
 
 settings = Settings()

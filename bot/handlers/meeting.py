@@ -13,6 +13,7 @@ from bot.database.models import Meeting, User
 from bot.database.session import async_session_factory
 from bot.services.llm import generate_protocol
 from bot.services.stt import transcribe_voice
+from bot.services.subscription import can_create_protocol, increment_protocol_count
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -60,10 +61,21 @@ async def _upsert_user(session: AsyncSession, message: Message) -> None:
 
 @router.message(Command("new"))
 async def cmd_new(message: Message, state: FSMContext) -> None:
+    allowed, remaining = await can_create_protocol(message.from_user.id)
+    if not allowed:
+        await message.answer(
+            "🚫 <b>Лимит бесплатных протоколов исчерпан</b>\n\n"
+            "В бесплатном плане доступно 3 протокола в месяц.\n"
+            "Перейдите на Премиум, чтобы создавать неограниченное количество протоколов.\n\n"
+            "💎 /subscribe — оформить подписку за 100 ₽/месяц"
+        )
+        return
+
     await state.clear()
     await state.set_state(MeetingStates.waiting_title)
+    hint = f" (осталось бесплатных: {remaining})" if remaining is not None else ""
     await message.answer(
-        "📋 <b>Новая встреча</b>\n\nВведите название встречи:",
+        f"📋 <b>Новая встреча</b>{hint}\n\nВведите название встречи:",
         reply_markup=ReplyKeyboardRemove(),
     )
 
@@ -183,6 +195,9 @@ async def finish_recording(message: Message, state: FSMContext, bot: Bot) -> Non
             meeting.protocol = protocol_text
             meeting.status = "done" if protocol_text else "draft"
             await session.commit()
+
+    if protocol_text:
+        await increment_protocol_count(message.from_user.id)
 
     await state.clear()
 
