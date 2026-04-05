@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +18,10 @@ class Settings(BaseSettings):
 
     # Webhook server (receives YooKassa payment notifications)
     webhook_port: int = 8080
+
+    # Comma-separated Telegram user IDs allowed to use /admin
+    # e.g. ADMIN_USER_IDS=123456789,987654321
+    admin_user_ids: List[int] = []
 
 
 settings = Settings()

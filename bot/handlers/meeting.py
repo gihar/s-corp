@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database.models import Meeting, User
 from bot.database.session import async_session_factory
+from bot.services.analytics import track
 from bot.services.llm import generate_protocol
 from bot.services.stt import transcribe_voice
 from bot.services.subscription import can_create_protocol, increment_protocol_count
@@ -63,6 +64,7 @@ async def _upsert_user(session: AsyncSession, message: Message) -> None:
 async def cmd_new(message: Message, state: FSMContext) -> None:
     allowed, remaining = await can_create_protocol(message.from_user.id)
     if not allowed:
+        await track(message.from_user.id, "free_limit_hit")
         await message.answer(
             "🚫 <b>Лимит бесплатных протоколов исчерпан</b>\n\n"
             "В бесплатном плане доступно 3 протокола в месяц.\n"
@@ -187,6 +189,7 @@ async def finish_recording(message: Message, state: FSMContext, bot: Bot) -> Non
         )
     except Exception as e:
         logger.exception("Protocol generation failed: %s", e)
+        await track(message.from_user.id, "llm_fail")
         protocol_text = None
 
     async with async_session_factory() as session:
@@ -198,6 +201,7 @@ async def finish_recording(message: Message, state: FSMContext, bot: Bot) -> Non
 
     if protocol_text:
         await increment_protocol_count(message.from_user.id)
+        await track(message.from_user.id, "protocol_created")
 
     await state.clear()
 
@@ -234,12 +238,14 @@ async def handle_voice_note(message: Message, state: FSMContext, bot: Bot) -> No
     await bot.delete_message(message.chat.id, status_msg.message_id)
 
     if transcript:
+        await track(message.from_user.id, "stt_ok")
         data = await state.get_data()
         notes: list = data.get("notes", [])
         notes.append(f"[Голосовая заметка]: {transcript}")
         await state.update_data(notes=notes)
         await message.answer(f"🎤 Расшифровано: <i>{transcript}</i>")
     else:
+        await track(message.from_user.id, "stt_fail")
         await message.answer(
             "⚠️ Не удалось расшифровать голосовое сообщение. "
             "Проверьте настройку OPENAI_API_KEY или отправьте текстовую заметку."

@@ -1,0 +1,13 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "python -m bot.main"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+
+# Run Alembic migrations before starting the bot.
+# Railway executes this once before each deploy.
+[deploy.releaseCommand]
+command = "alembic upgrade head"

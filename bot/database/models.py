@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Integer, String, Text, func
+from sqlalchemy import BigInteger, DateTime, Index, Integer, String, Text, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -43,3 +43,20 @@ class Meeting(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class UserEvent(Base):
+    """Append-only analytics event log."""
+
+    __tablename__ = "user_events"
+    __table_args__ = (
+        Index("ix_user_events_event_at", "event", "created_at"),
+        Index("ix_user_events_user_id", "user_id"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger)
+    # event kinds: new_user, protocol_created, subscription_started,
+    #               subscription_renewed, free_limit_hit, stt_ok, stt_fail, llm_fail
+    event: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)

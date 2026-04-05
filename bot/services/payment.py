@@ -42,6 +42,9 @@ async def create_payment(user_id: int, return_url: str) -> dict:
 
 async def activate_subscription(user_id: int) -> None:
     """Extend user subscription by SUBSCRIPTION_DAYS from today (or from current expiry)."""
+    from bot.services.analytics import track  # local import to avoid circular
+
+    is_renewal = False
     async with async_session_factory() as session:
         user = await session.get(User, user_id)
         if user is None:
@@ -51,6 +54,7 @@ async def activate_subscription(user_id: int) -> None:
         current_expiry = user.subscription_expires_at
         if current_expiry and current_expiry > now:
             user.subscription_expires_at = current_expiry + timedelta(days=SUBSCRIPTION_DAYS)
+            is_renewal = True
         else:
             user.subscription_expires_at = now + timedelta(days=SUBSCRIPTION_DAYS)
         user.is_subscribed = True
@@ -60,3 +64,5 @@ async def activate_subscription(user_id: int) -> None:
             user_id,
             user.subscription_expires_at,
         )
+    event = "subscription_renewed" if is_renewal else "subscription_started"
+    await track(user_id, event)

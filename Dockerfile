@@ -7,4 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "-m", "bot.main"]
+# For docker-compose / non-Railway deploys: run migrations then start the bot.
+# On Railway, the release command in railway.toml handles migrations separately.
+CMD ["sh", "-c", "alembic upgrade head && python -m bot.main"]

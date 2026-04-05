@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database.models import User
 from bot.database.session import async_session_factory
+from bot.services.analytics import track
 
 router = Router()
 
@@ -48,7 +49,8 @@ HELP_TEXT = """
 async def _upsert_user(message: Message) -> None:
     async with async_session_factory() as session:
         user = await session.get(User, message.from_user.id)
-        if user is None:
+        is_new = user is None
+        if is_new:
             user = User(
                 id=message.from_user.id,
                 username=message.from_user.username,
@@ -60,6 +62,8 @@ async def _upsert_user(message: Message) -> None:
             user.username = message.from_user.username
             user.full_name = message.from_user.full_name
         await session.commit()
+    if is_new:
+        await track(message.from_user.id, "new_user")
 
 
 @router.message(Command("start"))
