@@ -28,9 +28,13 @@ class Meeting(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger)
     title: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    # Comma-separated participant names
+    participants: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Newline-separated agenda items
+    agenda: Mapped[str | None] = mapped_column(Text, nullable=True)
     raw_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     protocol: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(32), default="draft")  # draft, processing, done
+    status: Mapped[str] = mapped_column(String(32), default="draft")  # draft, recording, processing, done
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

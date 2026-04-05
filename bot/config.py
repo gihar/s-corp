@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     bot_token: str
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/protocol_bot"
     anthropic_api_key: str = ""
+    openai_api_key: str = ""  # Used for Whisper STT (optional)
     debug: bool = False
 
 

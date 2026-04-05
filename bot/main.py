@@ -8,6 +8,8 @@ from aiogram.enums import ParseMode
 from bot.config import settings
 from bot.database.session import create_tables
 from bot.handlers.common import router as common_router
+from bot.handlers.meeting import router as meeting_router
+from bot.handlers.protocol import router as protocol_router
 
 logging.basicConfig(level=logging.INFO if not settings.debug else logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -21,6 +23,9 @@ async def main() -> None:
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
     dp = Dispatcher()
+    # Order matters: meeting FSM router first to catch state-based messages
+    dp.include_router(meeting_router)
+    dp.include_router(protocol_router)
     dp.include_router(common_router)
 
     logger.info("Starting bot...")
