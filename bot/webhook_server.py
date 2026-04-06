@@ -39,9 +39,11 @@ async def run_webhook_server() -> None:
 
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", settings.webhook_port)
+    # Use Railway's injected PORT if available, otherwise fall back to WEBHOOK_PORT.
+    listen_port = settings.port if settings.port != 8080 else settings.webhook_port
+    site = web.TCPSite(runner, "0.0.0.0", listen_port)
     await site.start()
-    logger.info("YooKassa webhook server listening on port %d", settings.webhook_port)
+    logger.info("YooKassa webhook server listening on port %d", listen_port)
 
     # Keep running indefinitely alongside the bot
     import asyncio

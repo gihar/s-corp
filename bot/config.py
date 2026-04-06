@@ -16,8 +16,9 @@ class Settings(BaseSettings):
     yookassa_shop_id: str = ""
     yookassa_secret_key: str = ""
 
-    # Webhook server (receives YooKassa payment notifications)
+    # Webhook server port. Railway injects PORT automatically; falls back to 8080.
     webhook_port: int = 8080
+    port: int = 8080  # Railway's injected PORT env var (used as alias)
 
     # Comma-separated Telegram user IDs allowed to use /admin
     # e.g. ADMIN_USER_IDS=123456789,987654321
